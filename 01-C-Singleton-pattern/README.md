@@ -1,106 +1,106 @@
 # Singleton Pattern (Mẫu Khởi Tạo Đơn Nhất)
 
-**Singleton Pattern** là mẫu thiết kế thuộc nhóm **Creational (Khởi tạo)**. Nó đảm bảo rằng một Class chỉ có **duy nhất một thực thể (Instance)** được tạo ra trong suốt vòng đời của ứng dụng, và cung cấp một điểm truy cập toàn cầu (Global Access Point) tới thực thể đó.
+**Singleton Pattern** là mẫu thiết kế thuộc nhóm **Creational (Khởi tạo)**. Nó đảm bảo rằng một Class chỉ có **duy nhất một thực thể (Instance)** được tạo ra trong suốt vòng đời của ứng dụng, và cung cấp một điểm truy cập chung cho toàn bộ ứng dụng.
 
 ---
 
-## 1. Vấn đề thực tế
+## 1. Ví dụ thực tế cho dễ hiểu
 
-Trong lập trình Web (ví dụ như ExpressJS hay NestJS), có những đối tượng mà chúng ta **chỉ nên có duy nhất một thực thể duy nhất** dùng chung cho toàn bộ ứng dụng:
-*   **Database Connection Pool:** Kết nối tới Cơ sở dữ liệu. Chúng ta không muốn mỗi lần cần truy vấn lại mở một kết nối mới, vì nó sẽ nhanh chóng làm tràn số lượng kết nối tối đa của Database (quá tải kết nối).
-*   **Logger Service:** Ghi log hệ thống. Cần một file log duy nhất để ghi nhận sự kiện của toàn hệ thống một cách đồng bộ.
-*   **Application Configuration:** Đọc các biến cấu hình từ file `.env` (chỉ cần đọc một lần và lưu vào bộ nhớ dùng chung).
+### 🗽 Ví dụ: Tổng thống của một quốc gia
+Mỗi quốc gia chỉ có thể có **duy nhất 1 vị Tổng thống** tại một thời điểm.
+* Bạn không thể tự ý tạo ra một tổng thống mới bằng cách gọi lệnh `new TongThong()`. Nếu ai thích cũng tự tạo ra tổng thống riêng, đất nước sẽ loạn.
+* Bất kỳ người dân hay bộ ngành nào muốn làm việc với tổng thống thì đều phải gặp **cùng một vị tổng thống duy nhất** đó thông qua văn phòng tổng thống (`TongThong.getInstance()`).
 
-Nếu không dùng Singleton, các lập trình viên khác có thể dùng từ khóa `new` khởi tạo vô số đối tượng, gây lãng phí tài nguyên và mất kiểm soát trạng thái dữ liệu.
-
----
-
-## 2. Giải pháp của Singleton
-
-Để ngăn chặn việc tạo ra nhiều đối tượng từ bên ngoài, Singleton áp dụng công thức **3 bước vàng**:
-
-1.  **`private constructor`**: Đặt hàm khởi tạo của Class là `private`. Điều này ngăn cản tuyệt đối việc sử dụng từ khóa `new ClassName()` từ bên ngoài.
-2.  **`private static instance`**: Tạo một biến tĩnh (`static`) và `private` ngay trong class để lưu giữ thực thể duy nhất.
-3.  **`public static getInstance()`**: Cung cấp một phương thức tĩnh công khai. Phương thức này sẽ kiểm tra:
-    *   Nếu `instance` chưa được tạo (bằng `null` hoặc `undefined`) $\rightarrow$ Khởi tạo nó một lần duy nhất.
-    *   Nếu `instance` đã được tạo rồi $\rightarrow$ Chỉ việc trả về instance đó.
-
-```mermaid
-classDiagram
-    class DatabaseConnection {
-      -static instance: DatabaseConnection
-      -constructor()
-      +static getInstance(): DatabaseConnection
-      +query(sql: string)
-    }
-```
+### 💻 Trong lập trình:
+* **Database Connection Pool:** Kết nối tới Cơ sở dữ liệu. Chúng ta không muốn mỗi lần cần truy vấn lại mở một kết nối mới, vì nó sẽ nhanh chóng làm quá tải và sập Database Server.
+* **Logger Service:** Ghi log hệ thống. Cần một file log duy nhất để ghi nhận sự kiện của toàn hệ thống một cách đồng bộ.
+* **Application Configuration:** Đọc các biến cấu hình từ file `.env` (chỉ cần đọc một lần và lưu vào bộ nhớ dùng chung).
 
 ---
 
-## 3. Cách triển khai bằng TypeScript (Lazy Initialization)
+## 2. Vấn đề & Giải pháp
 
-Dưới đây là cách triển khai chuẩn mực của Singleton Pattern:
+* **Vấn đề (Nếu không dùng Singleton):** 
+  Cứ mỗi lần cần query, lập trình viên lại dùng từ khóa `new DatabaseConnection()`. Nếu có 10,000 requests cùng lúc => 10,000 kết nối được tạo ra => Server sập.
+* **Giải pháp (Dùng Singleton):**
+  Chỉ tạo đúng 1 kết nối duy nhất khi ứng dụng chạy. Toàn bộ mọi nơi trong ứng dụng sẽ dùng chung kết nối duy nhất đó.
+
+---
+
+## 3. Công thức "3 Bước Vàng" để tạo Singleton
+
+Để ngăn chặn việc tạo ra nhiều đối tượng từ bên ngoài, Singleton áp dụng công thức sau:
 
 ```typescript
 class DatabaseConnection {
-  // Bước 2: Tạo biến static private để lưu instance duy nhất
+  // 1️⃣ BƯỚC 1: Tạo một biến static private để cất giữ thực thể duy nhất (bảo vật)
   private static instance: DatabaseConnection | null = null;
   private connectionId: number;
 
-  // Bước 1: Đặt constructor là private để chặn dùng "new" từ ngoài class
+  // 2️⃣ BƯỚC 2: Private Constructor - KHÓA CỬA CHÍNH!
+  // Đổi thành "private" để chặn tuyệt đối việc dùng từ khóa "new" từ bên ngoài Class.
   private constructor() {
-    this.connectionId = Math.random(); // Tạo ID ngẫu nhiên để nhận diện kết nối
-    console.log(`[DB CONNECTED] Khởi tạo kết nối Database thành công! ID: ${this.connectionId}`);
+    this.connectionId = Math.floor(Math.random() * 1000) + 1;
+    console.log(`\n[DB CONNECTED] Thiết lập kết nối thành công! ID: ${this.connectionId}`);
   }
 
-  // Bước 3: Phương thức static để truy cập instance từ ngoài
+  // 3️⃣ BƯỚC 3: Tạo phương thức static public để làm "người gác cổng"
   public static getInstance(): DatabaseConnection {
+    // Nếu chưa có ai kết nối (instance đang null) -> tạo mới 1 lần duy nhất
     if (!DatabaseConnection.instance) {
-      DatabaseConnection.instance = new DatabaseConnection();
+      DatabaseConnection.instance = new DatabaseConnection(); // Ở trong class nên gọi new thoải mái
     }
+    // Nếu đã tạo rồi -> trả về ngay kết nối cũ đó
     return DatabaseConnection.instance;
   }
 
-  // Một phương thức nghiệp vụ thông thường
+  // Phương thức nghiệp vụ thông thường
   public query(sql: string): void {
-    console.log(`[QUERY - Conn ID: ${this.connectionId}] Đang chạy câu lệnh: "${sql}"`);
+    console.log(`[QUERY - ID: ${this.connectionId}] Thực thi: "${sql}"`);
   }
 }
 ```
 
-### Cách sử dụng ở Client:
+---
+
+## 4. Cách sử dụng ở phía Client
 
 ```typescript
-// ❌ Dòng này sẽ báo lỗi biên dịch ngay lập tức:
+// ❌ LỖI NGAY: Không thể dùng từ khóa new nữa
 // const db = new DatabaseConnection(); 
 
-// ✅ Cách gọi đúng qua getInstance():
-const db1 = DatabaseConnection.getInstance();
+// ✅ CÁCH GỌI ĐÚNG:
+const db1 = DatabaseConnection.getInstance(); // Lần đầu: In ra "[DB CONNECTED] ID: 123"
 db1.query("SELECT * FROM users");
 
-const db2 = DatabaseConnection.getInstance();
+const db2 = DatabaseConnection.getInstance(); // Lần hai: Lấy lại ID cũ, không in kết nối mới
 db2.query("SELECT * FROM products");
 
-// Kiểm tra xem hai biến có trỏ chung vào 1 thực thể (1 vùng nhớ) không:
-console.log(db1 === db2); // Output: true (Hoàn toàn trùng khớp)
+const db3 = DatabaseConnection.getInstance(); // Lần ba: Vẫn là ID cũ 123
+db3.query("UPDATE posts SET title = 'OOP'");
+
+// Kiểm tra xem db1, db2, db3 có phải là cùng một kết nối không:
+console.log(db1 === db2 && db2 === db3); // Kết quả: true (Chung 1 vùng nhớ duy nhất)
 ```
 
 ---
 
-## 4. Ưu điểm và Nhược điểm của Singleton
+## 5. Singleton trong Node.js và NestJS thực tế
 
-### 👍 Ưu điểm:
-*   **Tiết kiệm tài nguyên:** Tránh việc khởi tạo lặp đi lặp lại các đối tượng nặng (như DB connection, file Logger).
-*   **Kiểm soát tài nguyên:** Dễ dàng kiểm soát số lượng kết nối hoặc giới hạn truy cập.
-*   **Chia sẻ dữ liệu dễ dàng:** Vì là instance duy nhất toàn cục nên dễ chia sẻ dữ liệu/cấu hình xuyên suốt ứng dụng.
+Khi đi làm dự án thực tế, bạn ít khi phải tự viết "3 Bước Vàng" thủ công vì framework đã hỗ trợ sẵn:
 
-### 👎 Nhược điểm:
-*   **Vi phạm Single Responsibility (SOLID):** Class Singleton vừa phải quản lý nghiệp vụ của nó, vừa phải tự quản lý vòng đời khởi tạo của chính nó.
-*   **Khó viết Unit Test:** Do trạng thái của Singleton là toàn cục và tồn tại suốt vòng đời ứng dụng, các test case có thể ảnh hưởng lẫn nhau nếu không reset trạng thái cẩn thận.
-*   **Che giấu sự phụ thuộc:** Các class khác gọi trực tiếp `DatabaseConnection.getInstance()` mà không thông qua khai báo tường minh trong constructor, khiến code khó tracking hơn. (Đó là lý do NestJS thay thế Singleton thuần túy bằng Dependency Injection).
+### A. Cơ chế Module Cache của Node.js (CommonJS / ES Modules)
+Khi bạn export một instance đã khởi tạo sẵn từ một file, Node.js sẽ tự động cache lại đối tượng đó. Mọi file import sau đó đều nhận được đúng một đối tượng duy nhất.
+```typescript
+// db.ts
+class Database {}
+export const dbInstance = new Database(); // Node.js tự động biến đây thành Singleton
+```
+
+### B. Dependency Injection trong NestJS
+Trong NestJS, mặc định tất cả các class khai báo `@Injectable()` (Service, Provider) đều có scope là `SINGLETON`. NestJS Container sẽ tự động khởi tạo chúng đúng 1 lần khi chạy ứng dụng và tự động phân phát (inject) đến các Controller cần dùng.
 
 ---
 
-## 🏁 Học thực hành tiếp theo
-
-Hãy mở file **[index.ts](file:///Users/mapclient.001/Desktop/Work/Learning/BE/design-patterns/01-C-Singleton-pattern/index.ts)** trong thư mục này để xem toàn bộ code mẫu và chạy thử nghiệm bằng terminal nhé!
+## 🏁 Chạy thử nghiệm ngay
+Hãy mở file **[index.ts](file:///Users/thantran/Desktop/learn/design-pattern/01-C-Singleton-pattern/index.ts)** để xem code chi tiết và chạy thử nghiệm bằng terminal để thấy rõ hoạt động của Singleton nhé!

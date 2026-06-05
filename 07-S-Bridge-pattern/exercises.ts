@@ -23,17 +23,17 @@ export interface ExportEngine {
 export class HtmlEngine implements ExportEngine {
   public renderHeader(text: string): string {
     // TODO: Trả về chuỗi định dạng tiêu đề HTML: <h1>text</h1>
-    throw new Error("Chưa triển khai");
+    return `<h1>${text}</h1>`;
   }
 
   public renderParagraph(text: string): string {
     // TODO: Trả về chuỗi định dạng đoạn văn HTML: <p>text</p>
-    throw new Error("Chưa triển khai");
+    return `<p>${text}</p>`;
   }
 
   public renderFooter(text: string): string {
     // TODO: Trả về chuỗi định dạng chân trang HTML: <footer>text</footer>
-    throw new Error("Chưa triển khai");
+    return `<footer>${text}</footer>`;
   }
 }
 
@@ -41,17 +41,17 @@ export class HtmlEngine implements ExportEngine {
 export class MarkdownEngine implements ExportEngine {
   public renderHeader(text: string): string {
     // TODO: Trả về chuỗi định dạng tiêu đề Markdown: # text
-    throw new Error("Chưa triển khai");
+    return `# ${text}`;
   }
 
   public renderParagraph(text: string): string {
     // TODO: Trả về chuỗi định dạng đoạn văn Markdown (chỉ cần trả về text gốc)
-    throw new Error("Chưa triển khai");
+    return text;
   }
 
   public renderFooter(text: string): string {
     // TODO: Trả về chuỗi định dạng chân trang Markdown đặt trong dấu sao: * text *
-    throw new Error("Chưa triển khai");
+    return `* ${text} *`;
   }
 }
 
@@ -75,7 +75,11 @@ export class SimpleDocument extends Document {
   public export(): string {
     // TODO: Sử dụng engine để render Header cho tiêu đề và Paragraph cho nội dung.
     // Kết nối các phần với nhau bằng dấu xuống dòng "\n".
-    throw new Error("Chưa triển khai");
+    return (
+      this.engine.renderHeader(this.title) +
+      "\n" +
+      this.engine.renderParagraph(this.content)
+    );
   }
 }
 
@@ -83,7 +87,12 @@ export class SimpleDocument extends Document {
 export class DetailedDocument extends Document {
   public footerText: string;
 
-  constructor(title: string, content: string, footerText: string, engine: ExportEngine) {
+  constructor(
+    title: string,
+    content: string,
+    footerText: string,
+    engine: ExportEngine,
+  ) {
     super(title, content, engine);
     this.footerText = footerText;
   }
@@ -91,7 +100,13 @@ export class DetailedDocument extends Document {
   public export(): string {
     // TODO: Sử dụng engine để render Header cho tiêu đề, Paragraph cho nội dung, và Footer cho footerText.
     // Kết nối các phần với nhau bằng dấu xuống dòng "\n".
-    throw new Error("Chưa triển khai");
+    return (
+      this.engine.renderHeader(this.title) +
+      "\n" +
+      this.engine.renderParagraph(this.content) +
+      "\n" +
+      this.engine.renderFooter(this.footerText)
+    );
   }
 }
 
@@ -123,7 +138,7 @@ export class PostgresDriver implements DatabaseDriver {
     // Giả lập kết quả trả về từ DB
     return [
       { id: 1, name: "Alice", email: "alice@postgres.com" },
-      { id: 2, name: "Bob", email: "bob@postgres.com" }
+      { id: 2, name: "Bob", email: "bob@postgres.com" },
     ];
   }
 }
@@ -160,10 +175,10 @@ export class UserRepository {
   }
 
   public getUsers(): any[] {
-    // TODO: Thực hiện kết nối tới database thông qua driver.
-    // Sau đó chạy câu truy vấn giả lập "SELECT * FROM users" bằng driver.execute(query)
-    // và trả về kết quả.
-    throw new Error("Chưa triển khai");
+    if (!this.driver.isConnected()) {
+      this.driver.connect();
+    }
+    return this.driver.execute("SELECT * FROM users");
   }
 }
 
@@ -180,15 +195,27 @@ export interface Theme {
 
 // Concrete Implementors cho Theme
 export class LightTheme implements Theme {
-  public getColor(): string { return "Blue"; }
-  public getBackgroundColor(): string { return "White"; }
-  public getBorderRadius(): number { return 4; }
+  public getColor(): string {
+    return "Blue";
+  }
+  public getBackgroundColor(): string {
+    return "White";
+  }
+  public getBorderRadius(): number {
+    return 4;
+  }
 }
 
 export class DarkTheme implements Theme {
-  public getColor(): string { return "Yellow"; }
-  public getBackgroundColor(): string { return "Charcoal"; }
-  public getBorderRadius(): number { return 8; }
+  public getColor(): string {
+    return "Yellow";
+  }
+  public getBackgroundColor(): string {
+    return "Charcoal";
+  }
+  public getBorderRadius(): number {
+    return 8;
+  }
 }
 
 // Abstraction cho UI Widget
@@ -214,7 +241,7 @@ export class Button extends Widget {
   public render(): string {
     // TODO: Trả về chuỗi kết xuất nút bấm theo định dạng:
     // "[Button] {label} | Color: {themeColor} | Border: {themeBorderRadius}px"
-    throw new Error("Chưa triển khai");
+    return `[Button] ${this.label} | Color: ${this.theme.getColor()} | Border: ${this.theme.getBorderRadius()}px`;
   }
 }
 
@@ -230,7 +257,7 @@ export class TextBox extends Widget {
   public render(): string {
     // TODO: Trả về chuỗi kết xuất textbox theo định dạng:
     // "[TextBox] {placeholder} | Background: {themeBgColor} | Border: {themeBorderRadius}px"
-    throw new Error("Chưa triển khai");
+    return `[TextBox] ${this.placeholder} | Background: ${this.theme.getBackgroundColor()} | Border: ${this.theme.getBorderRadius()}px`;
   }
 }
 
@@ -243,24 +270,39 @@ async function runTests() {
     const htmlEngine = new HtmlEngine();
     const markdownEngine = new MarkdownEngine();
 
-    const simpleDocHtml = new SimpleDocument("Báo cáo tháng 6", "Mọi thứ diễn ra rất tốt.", htmlEngine);
+    const simpleDocHtml = new SimpleDocument(
+      "Báo cáo tháng 6",
+      "Mọi thứ diễn ra rất tốt.",
+      htmlEngine,
+    );
     const detailedDocMd = new DetailedDocument(
-      "Dự án Alpha", 
-      "Giai đoạn thiết kế hệ thống đã hoàn thành.", 
-      "Bản quyền thuộc về công ty", 
-      markdownEngine
+      "Dự án Alpha",
+      "Giai đoạn thiết kế hệ thống đã hoàn thành.",
+      "Bản quyền thuộc về công ty",
+      markdownEngine,
     );
 
-    const test1_1 = simpleDocHtml.export() === "<h1>Báo cáo tháng 6</h1>\n<p>Mọi thứ diễn ra rất tốt.</p>";
-    const test1_2 = detailedDocMd.export() === "# Dự án Alpha\nGiai đoạn thiết kế hệ thống đã hoàn thành.\n* Bản quyền thuộc về công ty *";
+    const actualHtml = simpleDocHtml.export();
+    const expectedHtml = "<h1>Báo cáo tháng 6</h1>\n<p>Mọi thứ diễn ra rất tốt.</p>";
+    const test1_1 = actualHtml === expectedHtml;
+    console.log(`  - Test 1.1: SimpleDocument HTML -> [${test1_1 ? "OK" : "FAIL"}]`);
+    console.log(`    + Thực tế: ${JSON.stringify(actualHtml)}`);
+    console.log(`    + Mong đợi: ${JSON.stringify(expectedHtml)}`);
+
+    const actualMd = detailedDocMd.export();
+    const expectedMd = "# Dự án Alpha\nGiai đoạn thiết kế hệ thống đã hoàn thành.\n* Bản quyền thuộc về công ty *";
+    const test1_2 = actualMd === expectedMd;
+    console.log(`  - Test 1.2: DetailedDocument Markdown -> [${test1_2 ? "OK" : "FAIL"}]`);
+    console.log(`    + Thực tế: ${JSON.stringify(actualMd)}`);
+    console.log(`    + Mong đợi: ${JSON.stringify(expectedMd)}`);
 
     if (test1_1 && test1_2) {
       console.log(
-        "\x1b[32m  ✓ Thành công: Document Exporter xuất bản HTML và Markdown chính xác.\x1b[0m"
+        "\x1b[32m  ✓ Thành công: Document Exporter xuất bản HTML và Markdown chính xác.\x1b[0m",
       );
     } else {
       console.log(
-        "\x1b[31m  ✗ Thất bại: Định dạng xuất bản của tài liệu không đúng chuẩn.\x1b[0m"
+        "\x1b[31m  ✗ Thất bại: Định dạng xuất bản của tài liệu không đúng chuẩn.\x1b[0m",
       );
     }
   } catch (err: unknown) {
@@ -280,17 +322,27 @@ async function runTests() {
     const users1 = repo1.getUsers();
     const users2 = repo2.getUsers();
 
-    const test2_1 = postgresDriver.isConnected() && inMemoryDriver.isConnected();
+    const isPostgresConnected = postgresDriver.isConnected();
+    const isInMemoryConnected = inMemoryDriver.isConnected();
+    const test2_1 = isPostgresConnected && isInMemoryConnected;
+    console.log(`  - Test 2.1: Trạng thái kết nối -> [${test2_1 ? "OK" : "FAIL"}]`);
+    console.log(`    + Postgres connected: ${isPostgresConnected} | In-Memory connected: ${isInMemoryConnected}`);
+
     const test2_2 = users1.length === 2 && users1[0].name === "Alice";
+    console.log(`  - Test 2.2: Dữ liệu Postgres -> [${test2_2 ? "OK" : "FAIL"}]`);
+    console.log(`    + Thực tế: ${users1.length} users, user đầu: "${users1[0]?.name}" | Mong đợi: 2 users, user đầu: "Alice"`);
+
     const test2_3 = users2.length === 1 && users2[0].name === "David";
+    console.log(`  - Test 2.3: Dữ liệu In-Memory -> [${test2_3 ? "OK" : "FAIL"}]`);
+    console.log(`    + Thực tế: ${users2.length} users, user đầu: "${users2[0]?.name}" | Mong đợi: 1 user, user đầu: "David"`);
 
     if (test2_1 && test2_2 && test2_3) {
       console.log(
-        "\x1b[32m  ✓ Thành công: UserRepository kết nối và lấy dữ liệu thành công từ cả 2 driver.\x1b[0m"
+        "\x1b[32m  ✓ Thành công: UserRepository kết nối và lấy dữ liệu thành công từ cả 2 driver.\x1b[0m",
       );
     } else {
       console.log(
-        "\x1b[31m  ✗ Thất bại: Dữ liệu trả về từ các driver không đúng hoặc driver chưa được kết nối.\x1b[0m"
+        "\x1b[31m  ✗ Thất bại: Dữ liệu trả về từ các driver không đúng hoặc driver chưa được kết nối.\x1b[0m",
       );
     }
   } catch (err: unknown) {
@@ -308,18 +360,41 @@ async function runTests() {
     const lightText = new TextBox("Nhập email...", light);
     const darkText = new TextBox("Mật khẩu...", dark);
 
-    const test3_1 = lightBtn.render() === "[Button] Đăng nhập | Color: Blue | Border: 4px";
-    const test3_2 = darkBtn.render() === "[Button] Xóa tài khoản | Color: Yellow | Border: 8px";
-    const test3_3 = lightText.render() === "[TextBox] Nhập email... | Background: White | Border: 4px";
-    const test3_4 = darkText.render() === "[TextBox] Mật khẩu... | Background: Charcoal | Border: 8px";
+    const actualLightBtn = lightBtn.render();
+    const expectedLightBtn = "[Button] Đăng nhập | Color: Blue | Border: 4px";
+    const test3_1 = actualLightBtn === expectedLightBtn;
+    console.log(`  - Test 3.1: Light Button render -> [${test3_1 ? "OK" : "FAIL"}]`);
+    console.log(`    + Thực tế: "${actualLightBtn}"`);
+    console.log(`    + Mong đợi: "${expectedLightBtn}"`);
+
+    const actualDarkBtn = darkBtn.render();
+    const expectedDarkBtn = "[Button] Xóa tài khoản | Color: Yellow | Border: 8px";
+    const test3_2 = actualDarkBtn === expectedDarkBtn;
+    console.log(`  - Test 3.2: Dark Button render -> [${test3_2 ? "OK" : "FAIL"}]`);
+    console.log(`    + Thực tế: "${actualDarkBtn}"`);
+    console.log(`    + Mong đợi: "${expectedDarkBtn}"`);
+
+    const actualLightText = lightText.render();
+    const expectedLightText = "[TextBox] Nhập email... | Background: White | Border: 4px";
+    const test3_3 = actualLightText === expectedLightText;
+    console.log(`  - Test 3.3: Light TextBox render -> [${test3_3 ? "OK" : "FAIL"}]`);
+    console.log(`    + Thực tế: "${actualLightText}"`);
+    console.log(`    + Mong đợi: "${expectedLightText}"`);
+
+    const actualDarkText = darkText.render();
+    const expectedDarkText = "[TextBox] Mật khẩu... | Background: Charcoal | Border: 8px";
+    const test3_4 = actualDarkText === expectedDarkText;
+    console.log(`  - Test 3.4: Dark TextBox render -> [${test3_4 ? "OK" : "FAIL"}]`);
+    console.log(`    + Thực tế: "${actualDarkText}"`);
+    console.log(`    + Mong đợi: "${expectedDarkText}"`);
 
     if (test3_1 && test3_2 && test3_3 && test3_4) {
       console.log(
-        "\x1b[32m  ✓ Thành công: Các Widget hiển thị đúng theo Theme được liên kết qua Bridge.\x1b[0m"
+        "\x1b[32m  ✓ Thành công: Các Widget hiển thị đúng theo Theme được liên kết qua Bridge.\x1b[0m",
       );
     } else {
       console.log(
-        "\x1b[31m  ✗ Thất bại: Nội dung hoặc định dạng hiển thị của Widget bị sai.\x1b[0m"
+        "\x1b[31m  ✗ Thất bại: Nội dung hoặc định dạng hiển thị của Widget bị sai.\x1b[0m",
       );
     }
   } catch (err: unknown) {

@@ -29,14 +29,18 @@ export class InventoryService {
   public deductStock(productId: string, quantity: number): void {
     const available = this.stock.get(productId) || 0;
     this.stock.set(productId, available - quantity);
-    operationLogs.push(`INVENTORY: Đã trừ ${quantity} sản phẩm ${productId} khỏi kho`);
+    operationLogs.push(
+      `INVENTORY: Đã trừ ${quantity} sản phẩm ${productId} khỏi kho`,
+    );
   }
 }
 
 export class PaymentProcessor {
   public processPayment(userId: string, amount: number): boolean {
     if (amount <= 0) return false;
-    operationLogs.push(`PAYMENT: Đã thanh toán thành công $${amount} cho người dùng ${userId}`);
+    operationLogs.push(
+      `PAYMENT: Đã thanh toán thành công $${amount} cho người dùng ${userId}`,
+    );
     return true;
   }
 }
@@ -44,14 +48,18 @@ export class PaymentProcessor {
 export class ShippingService {
   public arrangeShipping(productId: string, quantity: number): string {
     const trackingCode = `TRK-${Math.floor(100000 + Math.random() * 900000)}`;
-    operationLogs.push(`SHIPPING: Đã sắp xếp vận chuyển ${quantity} x ${productId}. Tracking: ${trackingCode}`);
+    operationLogs.push(
+      `SHIPPING: Đã sắp xếp vận chuyển ${quantity} x ${productId}. Tracking: ${trackingCode}`,
+    );
     return trackingCode;
   }
 }
 
 export class NotificationService {
   public sendConfirmationEmail(userId: string, trackingCode: string): void {
-    operationLogs.push(`NOTIFICATION: Đã gửi email xác nhận cho ${userId} với mã vận đơn ${trackingCode}`);
+    operationLogs.push(
+      `NOTIFICATION: Đã gửi email xác nhận cho ${userId} với mã vận đơn ${trackingCode}`,
+    );
   }
 }
 
@@ -66,7 +74,7 @@ export class OrderFacade {
     inventory: InventoryService,
     payment: PaymentProcessor,
     shipping: ShippingService,
-    notification: NotificationService
+    notification: NotificationService,
   ) {
     this.inventory = inventory;
     this.payment = payment;
@@ -78,7 +86,7 @@ export class OrderFacade {
     productId: string,
     quantity: number,
     userId: string,
-    amount: number
+    amount: number,
   ): boolean {
     // TODO: Triển khai quy trình đặt hàng theo các bước:
     // 1. Kiểm tra kho hàng (checkStock). Nếu không đủ, ghi log lỗi: "FACADE: Hết hàng!" và trả về false.
@@ -87,7 +95,18 @@ export class OrderFacade {
     // 4. Sắp xếp giao hàng (arrangeShipping) và lấy mã vận đơn (trackingCode).
     // 5. Gửi email xác nhận (sendConfirmationEmail).
     // 6. Trả về true.
-    throw new Error("Chưa triển khai");
+    if (!this.inventory.checkStock(productId, quantity)) {
+      operationLogs.push("FACADE: Hết hàng!");
+      return false;
+    }
+    if (!this.payment.processPayment(userId, amount)) {
+      operationLogs.push("FACADE: Thanh toán lỗi!");
+      return false;
+    }
+    this.inventory.deductStock(productId, quantity);
+    const trackingCode = this.shipping.arrangeShipping(productId, quantity);
+    this.notification.sendConfirmationEmail(userId, trackingCode);
+    return true;
   }
 }
 
@@ -101,7 +120,9 @@ export class CPU {
   }
 
   public jump(position: number): void {
-    operationLogs.push(`CPU: Đã chuyển con trỏ lệnh tới địa chỉ ô nhớ 0x${position.toString(16)}`);
+    operationLogs.push(
+      `CPU: Đã chuyển con trỏ lệnh tới địa chỉ ô nhớ 0x${position.toString(16)}`,
+    );
   }
 
   public execute(): void {
@@ -111,13 +132,17 @@ export class CPU {
 
 export class Memory {
   public load(position: number, data: string): void {
-    operationLogs.push(`RAM: Nạp dữ liệu "${data}" vào địa chỉ 0x${position.toString(16)}`);
+    operationLogs.push(
+      `RAM: Nạp dữ liệu "${data}" vào địa chỉ 0x${position.toString(16)}`,
+    );
   }
 }
 
 export class HardDrive {
   public read(lba: number, size: number): string {
-    operationLogs.push(`HDD: Đọc dữ liệu từ cung từ (LBA) ${lba}, dung lượng ${size} bytes`);
+    operationLogs.push(
+      `HDD: Đọc dữ liệu từ cung từ (LBA) ${lba}, dung lượng ${size} bytes`,
+    );
     return "KERNEL_IMAGE_DATA";
   }
 }
@@ -137,7 +162,7 @@ export class ComputerFacade {
   public startComputer(): void {
     const BOOT_SECTOR = 100;
     const SECTOR_SIZE = 512;
-    const BOOT_ADDRESS = 0x00F0;
+    const BOOT_ADDRESS = 0x00f0;
 
     // TODO: Triển khai quy trình boot máy tính sử dụng các hệ thống con:
     // 1. CPU đóng băng: cpu.freeze()
@@ -145,7 +170,11 @@ export class ComputerFacade {
     // 3. RAM nạp dữ liệu Boot Address: memory.load(BOOT_ADDRESS, bootData)
     // 4. CPU chuyển trỏ lệnh: cpu.jump(BOOT_ADDRESS)
     // 5. CPU thực thi lệnh: cpu.execute()
-    throw new Error("Chưa triển khai");
+    this.cpu.freeze();
+    const bootData = this.hardDrive.read(BOOT_SECTOR, SECTOR_SIZE);
+    this.memory.load(BOOT_ADDRESS, bootData);
+    this.cpu.jump(BOOT_ADDRESS);
+    this.cpu.execute();
   }
 }
 
@@ -160,34 +189,66 @@ async function runTests() {
     const shipping = new ShippingService();
     const notification = new NotificationService();
 
-    const orderFacade = new OrderFacade(inventory, payment, shipping, notification);
+    const orderFacade = new OrderFacade(
+      inventory,
+      payment,
+      shipping,
+      notification,
+    );
 
     // Test 1.1: Đặt hàng thành công
     operationLogs.length = 0;
-    const successResult = orderFacade.placeOrder("prod-100", 2, "user-999", 150);
+    const successResult = orderFacade.placeOrder(
+      "prod-100",
+      2,
+      "user-999",
+      150,
+    );
     const test1_1 = successResult === true;
-    console.log(`  - Test 1.1: Đặt hàng hợp lệ thành công -> [${test1_1 ? "OK" : "FAIL"}]`);
-    
-    const hasCorrectSteps = 
-      operationLogs.some(log => log.includes("INVENTORY: Đã trừ 2 sản phẩm prod-100")) &&
-      operationLogs.some(log => log.includes("PAYMENT: Đã thanh toán")) &&
-      operationLogs.some(log => log.includes("SHIPPING: Đã sắp xếp")) &&
-      operationLogs.some(log => log.includes("NOTIFICATION: Đã gửi email"));
-    
-    console.log(`  - Test 1.2: Các bước hệ thống con thực thi -> [${hasCorrectSteps ? "OK" : "FAIL"}]`);
-    console.log(`    + Các bước thực tế:\n      ${operationLogs.join("\n      ")}`);
+    console.log(
+      `  - Test 1.1: Đặt hàng hợp lệ thành công -> [${test1_1 ? "OK" : "FAIL"}]`,
+    );
+
+    const hasCorrectSteps =
+      operationLogs.some((log) =>
+        log.includes("INVENTORY: Đã trừ 2 sản phẩm prod-100"),
+      ) &&
+      operationLogs.some((log) => log.includes("PAYMENT: Đã thanh toán")) &&
+      operationLogs.some((log) => log.includes("SHIPPING: Đã sắp xếp")) &&
+      operationLogs.some((log) => log.includes("NOTIFICATION: Đã gửi email"));
+
+    console.log(
+      `  - Test 1.2: Các bước hệ thống con thực thi -> [${hasCorrectSteps ? "OK" : "FAIL"}]`,
+    );
+    console.log(
+      `    + Các bước thực tế:\n      ${operationLogs.join("\n      ")}`,
+    );
 
     // Test 1.3: Đặt hàng hết kho
     operationLogs.length = 0;
-    const outOfStockResult = orderFacade.placeOrder("prod-200", 1, "user-999", 50);
+    const outOfStockResult = orderFacade.placeOrder(
+      "prod-200",
+      1,
+      "user-999",
+      50,
+    );
     const test1_3 = outOfStockResult === false;
-    console.log(`  - Test 1.3: Đặt hàng sản phẩm hết kho -> [${test1_3 ? "OK" : "FAIL"}]`);
+    console.log(
+      `  - Test 1.3: Đặt hàng sản phẩm hết kho -> [${test1_3 ? "OK" : "FAIL"}]`,
+    );
 
     // Test 1.4: Lỗi thanh toán
     operationLogs.length = 0;
-    const badPaymentResult = orderFacade.placeOrder("prod-100", 1, "user-999", -10);
+    const badPaymentResult = orderFacade.placeOrder(
+      "prod-100",
+      1,
+      "user-999",
+      -10,
+    );
     const test1_4 = badPaymentResult === false;
-    console.log(`  - Test 1.4: Lỗi thanh toán không hợp lệ -> [${test1_4 ? "OK" : "FAIL"}]`);
+    console.log(
+      `  - Test 1.4: Lỗi thanh toán không hợp lệ -> [${test1_4 ? "OK" : "FAIL"}]`,
+    );
 
     if (test1_1 && hasCorrectSteps && test1_3 && test1_4) {
       console.log(
@@ -217,9 +278,9 @@ async function runTests() {
     const expectedSteps = [
       "CPU: Đang đóng băng bộ vi xử lý",
       "HDD: Đọc dữ liệu từ cung từ (LBA) 100, dung lượng 512 bytes",
-      "RAM: Nạp dữ liệu \"KERNEL_IMAGE_DATA\" vào địa chỉ 0xf0",
+      'RAM: Nạp dữ liệu "KERNEL_IMAGE_DATA" vào địa chỉ 0xf0',
       "CPU: Đã chuyển con trỏ lệnh tới địa chỉ ô nhớ 0xf0",
-      "CPU: Bắt đầu thực thi các lệnh từ RAM"
+      "CPU: Bắt đầu thực thi các lệnh từ RAM",
     ];
 
     let test2_1 = operationLogs.length === expectedSteps.length;
@@ -232,7 +293,9 @@ async function runTests() {
       }
     }
 
-    console.log(`  - Test 2.1: Thứ tự boot máy tính -> [${test2_1 ? "OK" : "FAIL"}]`);
+    console.log(
+      `  - Test 2.1: Thứ tự boot máy tính -> [${test2_1 ? "OK" : "FAIL"}]`,
+    );
     console.log(`    + Thực tế:\n      ${operationLogs.join("\n      ")}`);
     console.log(`    + Mong đợi:\n      ${expectedSteps.join("\n      ")}`);
 

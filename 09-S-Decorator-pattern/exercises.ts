@@ -27,7 +27,7 @@ export class PlainText implements TextComponent {
 
   public format(): string {
     // TODO: Trả về văn bản gốc
-    throw new Error("Chưa triển khai");
+    return this.text;
   }
 }
 
@@ -48,7 +48,7 @@ export abstract class TextDecorator implements TextComponent {
 export class BoldDecorator extends TextDecorator {
   public format(): string {
     // TODO: Bọc kết quả định dạng của component gốc trong cặp thẻ <b> và </b>
-    throw new Error("Chưa triển khai");
+    return `<b>${this.component.format()}</b>`;
   }
 }
 
@@ -56,7 +56,7 @@ export class BoldDecorator extends TextDecorator {
 export class ItalicDecorator extends TextDecorator {
   public format(): string {
     // TODO: Bọc kết quả định dạng của component gốc trong cặp thẻ <i> và </i>
-    throw new Error("Chưa triển khai");
+    return `<i>${this.component.format()}</i>`;
   }
 }
 
@@ -64,7 +64,7 @@ export class ItalicDecorator extends TextDecorator {
 export class UnderlineDecorator extends TextDecorator {
   public format(): string {
     // TODO: Bọc kết quả định dạng của component gốc trong cặp thẻ <u> và </u>
-    throw new Error("Chưa triển khai");
+    return `<u>${this.component.format()}</u>`;
   }
 }
 
@@ -84,7 +84,7 @@ export interface Notifier {
 export class EmailNotifier implements Notifier {
   public send(message: string): void {
     // TODO: Ghi vào sendLogs chuỗi log dạng: "✉️ Gửi Email với nội dung: {message}"
-    throw new Error("Chưa triển khai");
+    sendLogs.push(`✉️ Gửi Email với nội dung: ${message}`);
   }
 }
 
@@ -106,7 +106,8 @@ export class SmsDecorator extends NotifierDecorator {
   public send(message: string): void {
     // TODO: Đầu tiên, gọi send() của đối tượng wrappee
     // Sau đó, ghi vào sendLogs chuỗi log dạng: "📱 Gửi SMS với nội dung: {message}"
-    throw new Error("Chưa triển khai");
+    this.wrappee.send(message);
+    sendLogs.push(`📱 Gửi SMS với nội dung: ${message}`);
   }
 }
 
@@ -115,7 +116,8 @@ export class SlackDecorator extends NotifierDecorator {
   public send(message: string): void {
     // TODO: Đầu tiên, gọi send() của đối tượng wrappee
     // Sau đó, ghi vào sendLogs chuỗi log dạng: "💬 Gửi Slack với nội dung: {message}"
-    throw new Error("Chưa triển khai");
+    this.wrappee.send(message);
+    sendLogs.push(`💬 Gửi Slack với nội dung: ${message}`);
   }
 }
 

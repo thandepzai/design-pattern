@@ -35,13 +35,13 @@ export class MenuItem implements MenuComponent {
 
   public getPrice(): number {
     // TODO: Trả về giá của món ăn
-    throw new Error("Chưa triển khai");
+    return this.price;
   }
 
   public print(indent: string = ""): string {
     // TODO: Trả về chuỗi hiển thị theo cấu trúc: "{indent}- {name}: ${price}"
     // Ví dụ: "  - Cà phê sữa: $2.5"
-    throw new Error("Chưa triển khai");
+    return `${indent}- ${this.name}: $${this.price}`;
   }
 }
 
@@ -60,17 +60,21 @@ export class MenuSection implements MenuComponent {
 
   public add(component: MenuComponent): void {
     // TODO: Thêm component con vào danh sách
-    throw new Error("Chưa triển khai");
+    this.children.push(component);
   }
 
   public remove(component: MenuComponent): void {
     // TODO: Xóa component con khỏi danh sách
-    throw new Error("Chưa triển khai");
+    this.children = this.children.filter((child) => child !== component);
   }
 
   public getPrice(): number {
     // TODO: Tính tổng giá trị của toàn bộ các phần tử con bên trong
-    throw new Error("Chưa triển khai");
+    let totalPrice = 0;
+    for (const child of this.children) {
+      totalPrice += child.getPrice();
+    }
+    return totalPrice;
   }
 
   public print(indent: string = ""): string {
@@ -83,7 +87,11 @@ export class MenuSection implements MenuComponent {
     // "  - Cà phê: $2"
     // "  [ Trà ]"
     // "    - Trà đào: $3"
-    throw new Error("Chưa triển khai");
+    let result = `${indent}[ ${this.name} ]`;
+    for (const child of this.children) {
+      result += "\n" + child.print(indent + "  ");
+    }
+    return result;
   }
 }
 
@@ -94,6 +102,7 @@ export class MenuSection implements MenuComponent {
 // ============================================================================
 
 export interface GiftItem {
+  getName(): string;
   getPrice(): number;
 }
 
@@ -112,8 +121,7 @@ export class Product implements GiftItem {
   }
 
   public getPrice(): number {
-    // TODO: Trả về giá của sản phẩm
-    throw new Error("Chưa triển khai");
+    return this.price;
   }
 }
 
@@ -128,20 +136,27 @@ export class GiftBox implements GiftItem {
     this.packagingFee = packagingFee;
   }
 
+  public getName(): string {
+    return this.name;
+  }
+
   public add(item: GiftItem): void {
     // TODO: Thêm item vào danh sách items
-    throw new Error("Chưa triển khai");
+    this.items.push(item);
   }
 
   public remove(item: GiftItem): void {
     // TODO: Xóa item khỏi danh sách items
-    throw new Error("Chưa triển khai");
+    this.items = this.items.filter((i) => i !== item);
   }
 
   public getPrice(): number {
     // TODO: Tính tổng giá trị của GiftBox:
     // Tổng giá của các item con + phí đóng gói (packagingFee) của chính nó.
-    throw new Error("Chưa triển khai");
+    return this.items.reduce(
+      (total, item) => total + item.getPrice(),
+      this.packagingFee,
+    );
   }
 }
 
@@ -170,23 +185,31 @@ async function runTests() {
     const expectedPrice = 2.5 + 3.0 + 2.8;
     const actualPrice = mainMenu.getPrice();
     const test1_1 = Math.abs(actualPrice - expectedPrice) < 0.01;
-    console.log(`  - Test 1.1: Tính tổng giá thực đơn -> [${test1_1 ? "OK" : "FAIL"}]`);
+    console.log(
+      `  - Test 1.1: Tính tổng giá thực đơn -> [${test1_1 ? "OK" : "FAIL"}]`,
+    );
     console.log(`    + Thực tế: $${actualPrice} | Mong đợi: $${expectedPrice}`);
 
     // Test 1.2: print()
     const actualPrint = mainMenu.print();
-    const expectedPrint = 
+    const expectedPrint =
       "[ Menu Chính ]\n" +
       "  [ Đồ uống ]\n" +
       "    - Cà phê sữa: $2.5\n" +
       "    - Nước cam: $3\n" +
       "    [ Các loại Trà ]\n" +
       "      - Trà đào: $2.8";
-    
+
     // Chuẩn hóa chuỗi bằng cách bỏ khoảng trắng thừa ở cuối dòng để so sánh
-    const normalize = (s: string) => s.split("\n").map(l => l.trimEnd()).join("\n");
+    const normalize = (s: string) =>
+      s
+        .split("\n")
+        .map((l) => l.trimEnd())
+        .join("\n");
     const test1_2 = normalize(actualPrint) === normalize(expectedPrint);
-    console.log(`  - Test 1.2: In cấu trúc thực đơn -> [${test1_2 ? "OK" : "FAIL"}]`);
+    console.log(
+      `  - Test 1.2: In cấu trúc thực đơn -> [${test1_2 ? "OK" : "FAIL"}]`,
+    );
     console.log(`    + Thực tế:\n${actualPrint}`);
     console.log(`    + Mong đợi:\n${expectedPrint}`);
 
@@ -222,15 +245,23 @@ async function runTests() {
     const expectedSmallBoxPrice = 50 + 30 + 5; // 85
     const actualSmallBoxPrice = smallBox.getPrice();
     const test2_1 = actualSmallBoxPrice === expectedSmallBoxPrice;
-    console.log(`  - Test 2.1: Tính giá Hộp phụ kiện nhỏ -> [${test2_1 ? "OK" : "FAIL"}]`);
-    console.log(`    + Thực tế: $${actualSmallBoxPrice} | Mong đợi: $${expectedSmallBoxPrice}`);
+    console.log(
+      `  - Test 2.1: Tính giá Hộp phụ kiện nhỏ -> [${test2_1 ? "OK" : "FAIL"}]`,
+    );
+    console.log(
+      `    + Thực tế: $${actualSmallBoxPrice} | Mong đợi: $${expectedSmallBoxPrice}`,
+    );
 
     // Test 2.2: getPrice() của Big Box
     const expectedBigBoxPrice = 1000 + expectedSmallBoxPrice + 15; // 1100
     const actualBigBoxPrice = bigBox.getPrice();
     const test2_2 = actualBigBoxPrice === expectedBigBoxPrice;
-    console.log(`  - Test 2.2: Tính giá Hộp quà lớn -> [${test2_2 ? "OK" : "FAIL"}]`);
-    console.log(`    + Thực tế: $${actualBigBoxPrice} | Mong đợi: $${expectedBigBoxPrice}`);
+    console.log(
+      `  - Test 2.2: Tính giá Hộp quà lớn -> [${test2_2 ? "OK" : "FAIL"}]`,
+    );
+    console.log(
+      `    + Thực tế: $${actualBigBoxPrice} | Mong đợi: $${expectedBigBoxPrice}`,
+    );
 
     if (test2_1 && test2_2) {
       console.log(

@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Editor from '@monaco-editor/react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { 
   ArrowLeft, BookOpen, Code, Play, CheckCircle2, 
   Terminal, Save, AlertTriangle, Layers, Cpu, Zap, ChevronRight, Check
@@ -258,8 +260,9 @@ export default function PatternDetailClient({ pattern, allPatterns }: Props) {
         };
 
         try {
+          const hasLogsDeclaration = /\b(const|let|var)\s+operationLogs\b/.test(transpiledJs);
           const wrappedJs = `
-            let operationLogs = [];
+            ${hasLogsDeclaration ? '' : 'let operationLogs = [];'}
             ${transpiledJs}
           `;
           
@@ -481,21 +484,36 @@ export default function PatternDetailClient({ pattern, allPatterns }: Props) {
                       ol: ({ children }) => <ol className="list-decimal pl-6 space-y-2 mb-4 text-zinc-300">{children}</ol>,
                       li: ({ children }) => <li className="leading-relaxed">{children}</li>,
                       pre: ({ children }) => {
-                        // Nhận diện block code Mermaid
                         const childrenArray = React.Children.toArray(children);
                         const firstChild = childrenArray[0] as any;
-                        if (
-                          firstChild &&
-                          firstChild.props &&
-                          firstChild.props.className?.includes('language-mermaid')
-                        ) {
+                        const className = firstChild?.props?.className ?? '';
+                        const match = /language-(\w+)/.exec(className);
+
+                        if (match?.[1] === 'mermaid') {
                           const chartCode = String(firstChild.props.children).replace(/\n$/, '');
                           return <MermaidRenderer chart={chartCode} />;
                         }
+
+                        const lang = match?.[1] ?? 'typescript';
+                        const codeText = String(firstChild?.props?.children ?? '').replace(/\n$/, '');
+
                         return (
-                          <pre className="bg-zinc-950 border border-zinc-900 p-4 rounded-xl overflow-x-auto my-4 text-sm font-mono text-zinc-200">
-                            {children}
-                          </pre>
+                          <div className="my-4 rounded-xl overflow-hidden border border-zinc-800">
+                            <SyntaxHighlighter
+                              language={lang}
+                              style={vscDarkPlus}
+                              customStyle={{
+                                margin: 0,
+                                padding: '1rem',
+                                fontSize: '0.8rem',
+                                background: '#0d0d0f',
+                              }}
+                              showLineNumbers
+                              lineNumberStyle={{ color: '#4a4a5a', minWidth: '2.5em' }}
+                            >
+                              {codeText}
+                            </SyntaxHighlighter>
+                          </div>
                         );
                       },
                       code: ({ node, ...props }) => {

@@ -34,7 +34,7 @@ export default async function PatternPage({ params }: Props) {
   const allPatterns = getPatternsList();
 
   return (
-    <main className="h-screen bg-zinc-950 overflow-hidden select-none">
+    <main className="h-screen bg-zinc-950 overflow-hidden">
       <PatternDetailClient pattern={detail} allPatterns={allPatterns} />
     </main>
   );

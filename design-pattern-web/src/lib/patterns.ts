@@ -46,7 +46,7 @@ export function getPatternsList(): PatternItem[] {
     const fullPath = path.join(rootDir, file);
     if (!fs.statSync(fullPath).isDirectory()) continue;
 
-    const [id, number, type, namePart] = match;
+    const [, number, type, namePart] = match;
     const name = namePart.replace('-pattern', '');
 
     // Đọc README.md để lấy tiêu đề dòng 1
@@ -54,7 +54,11 @@ export function getPatternsList(): PatternItem[] {
     const readmePath = path.join(fullPath, 'README.md');
     if (fs.existsSync(readmePath)) {
       const firstLine = fs.readFileSync(readmePath, 'utf8').split('\n')[0];
-      title = firstLine.replace(/^#\s+/, '').trim();
+      const readmeTitle = firstLine.replace(/^#\s+/, '').trim();
+      // Chỉ dùng README title nếu không phải tên folder thô (vd: "17-B-Mediator-pattern")
+      if (readmeTitle && !/^\d{2}-[A-Z]-/.test(readmeTitle)) {
+        title = readmeTitle;
+      }
     }
 
     // Đọc exercises.ts để check trạng thái hoàn thành

@@ -1,4 +1,4 @@
-# 12. Proxy Pattern (Structural Pattern)
+# Proxy Pattern (Structural Pattern)
 
 ## Khái niệm
 **Proxy Pattern** (Mẫu Thiết kế Ủy quyền / Đại diện) là một mẫu thiết kế cấu trúc cho phép bạn cung cấp một đối tượng thay thế hoặc đại diện cho một đối tượng khác. 
@@ -29,6 +29,32 @@ Một Proxy kiểm soát quyền truy cập đến đối tượng gốc (Real S
 2. **Real Subject:** Đối tượng thực sự chứa logic nghiệp vụ cốt lõi (nhưng có thể nặng, cần bảo mật hoặc chạy chậm).
 3. **Proxy:** Đại diện cho Real Subject, chứa tham chiếu tới Real Subject. Nó triển khai Subject Interface để đón nhận các yêu cầu từ Client, xử lý logic bổ sung (phân quyền, cache, lazy load) trước hoặc sau khi chuyển tiếp yêu cầu đến Real Subject.
 4. **Client:** Làm việc với Proxy thông qua Subject Interface.
+
+---
+
+## Sơ đồ cấu trúc
+
+```mermaid
+classDiagram
+    class ThirdPartyYouTubeLib {
+        <<interface>>
+        +getVideoInfo(id) string
+    }
+    class ThirdPartyYouTubeClass {
+        +getVideoInfo(id) string
+    }
+    class CachedYouTubeProxy {
+        -service: ThirdPartyYouTubeClass
+        -cache: Map~string, string~
+        +getVideoInfo(id) string
+    }
+    class Client {
+    }
+    ThirdPartyYouTubeClass ..|> ThirdPartyYouTubeLib
+    CachedYouTubeProxy ..|> ThirdPartyYouTubeLib
+    CachedYouTubeProxy --> ThirdPartyYouTubeClass : ủy quyền khi cache miss
+    Client --> ThirdPartyYouTubeLib : dùng qua interface
+```
 
 ---
 

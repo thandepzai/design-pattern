@@ -1,4 +1,4 @@
-# 11. Flyweight Pattern (Structural Pattern)
+# Flyweight Pattern (Structural Pattern)
 
 ## Khái niệm
 **Flyweight Pattern** (Mẫu Thiết kế Tối giản) là một mẫu thiết kế cấu trúc giúp bạn **tiết kiệm bộ nhớ** bằng cách chia sẻ trạng thái chung giữa nhiều đối tượng thay vì giữ tất cả dữ liệu trong mỗi đối tượng riêng lẻ.
@@ -36,6 +36,32 @@ Flyweight khuyên chúng ta tách các thuộc tính của một đối tượng
 2. **Flyweight Factory (ví dụ: `TreeFactory`):** Quản lý và tái sử dụng các đối tượng Flyweight. Khi Client yêu cầu một Flyweight, Factory kiểm tra xem nó đã tồn tại chưa. Nếu có rồi thì trả về đối tượng hiện tại, nếu chưa thì tạo mới và lưu lại.
 3. **Context (ví dụ: `Tree`):** Chứa trạng thái ngoại tại (Extrinsic State) và tham chiếu tới đối tượng Flyweight tương ứng.
 4. **Client:** Sử dụng Factory để tạo các đối tượng và truyền trạng thái ngoại tại vào chúng.
+
+---
+
+## Sơ đồ cấu trúc
+
+```mermaid
+classDiagram
+    class TreeType {
+        -name: string
+        -color: string
+        -mesh: string
+        +draw(x, y)
+    }
+    class TreeFactory {
+        -cache: Map~string, TreeType~
+        +getTreeType(name, color, mesh)$ TreeType
+    }
+    class Tree {
+        -x: number
+        -y: number
+        -treeType: TreeType
+        +draw()
+    }
+    TreeFactory --> TreeType : tạo/tái sử dụng
+    Tree --> TreeType : tham chiếu chung
+```
 
 ---
 

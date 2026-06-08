@@ -27,6 +27,21 @@ Mỗi quốc gia chỉ có thể có **duy nhất 1 vị Tổng thống** tại 
 
 ---
 
+## Sơ đồ cấu trúc
+
+```mermaid
+classDiagram
+    class Singleton {
+        -instance$: Singleton
+        -constructor()
+        +getInstance()$ Singleton
+        +query(sql)
+    }
+    note for Singleton "Private constructor ngăn new từ bên ngoài\ngetInstance() là cổng truy cập duy nhất"
+```
+
+---
+
 ## 3. Công thức "3 Bước Vàng" để tạo Singleton
 
 Để ngăn chặn việc tạo ra nhiều đối tượng từ bên ngoài, Singleton áp dụng công thức sau:

@@ -1,4 +1,4 @@
-# 14. Command Pattern (Behavioral Pattern)
+# Command Pattern (Behavioral Pattern)
 
 ## Khái niệm
 **Command Pattern** (Mẫu Thiết kế Lệnh) là một mẫu thiết kế hành vi giúp chuyển đổi một yêu cầu hoặc một thao tác thành một đối tượng độc lập. 

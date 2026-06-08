@@ -1,4 +1,4 @@
-# 13. Chain of Responsibility Pattern (Behavioral Pattern)
+# Chain of Responsibility Pattern (Behavioral Pattern)
 
 ## Khái niệm
 **Chain of Responsibility** (Chuỗi Trách nhiệm) là một mẫu thiết kế hành vi cho phép bạn truyền các yêu cầu dọc theo một chuỗi các trình xử lý (handlers). 
@@ -32,6 +32,38 @@ Khi một yêu cầu đi vào hệ thống:
 2. **Base Handler (Tùy chọn):** Một lớp trừu tượng (abstract class) triển khai việc lưu trữ liên kết tới handler tiếp theo, giúp giảm thiểu code trùng lặp.
 3. **Concrete Handlers:** Các lớp xử lý cụ thể. Khi nhận yêu cầu, nó sẽ xử lý hoặc chuyển cho đối tượng tiếp theo.
 4. **Client:** Tạo ra chuỗi các handler và gửi yêu cầu tới handler đầu tiên của chuỗi.
+
+---
+
+## Sơ đồ cấu trúc
+
+```mermaid
+classDiagram
+    class Handler {
+        <<interface>>
+        +setNext(handler) Handler
+        +handle(request) string
+    }
+    class AbstractHandler {
+        -nextHandler: Handler
+        +setNext(handler) Handler
+        +handle(request) string
+    }
+    class AuthHandler {
+        +handle(request) string
+    }
+    class AdminHandler {
+        +handle(request) string
+    }
+    class ValidationHandler {
+        +handle(request) string
+    }
+    AbstractHandler ..|> Handler
+    AuthHandler --|> AbstractHandler
+    AdminHandler --|> AbstractHandler
+    ValidationHandler --|> AbstractHandler
+    AbstractHandler --> Handler : chuyển tiếp cho next
+```
 
 ---
 
